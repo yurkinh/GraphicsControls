@@ -9,6 +9,7 @@ namespace GraphicsControls
     [ContentProperty(nameof(Content))]
     public class Frame : GraphicsView
     {
+        public static readonly float[] DASHED = { 4, 4 };
         public static class Layers
         {
             public const string Shadow = "Frame.Layers.Shadow";
@@ -21,6 +22,11 @@ namespace GraphicsControls
 
         public static readonly BindableProperty BorderColorProperty =
             BindableProperty.Create(nameof(BorderColor), typeof(XColor), typeof(Frame), XColor.Default);
+
+        public static readonly BindableProperty BorderThicknessProperty =
+            BindableProperty.Create(nameof(BorderThickness), typeof(int), typeof(Frame), 0);
+        public static readonly BindableProperty BorderIsDashedProperty =
+            BindableProperty.Create(nameof(BorderIsDashed), typeof(bool), typeof(Frame), default(bool));
 
         public static readonly BindableProperty CornerRadiusProperty =
             BindableProperty.Create(nameof(CornerRadius), typeof(CornerRadius), typeof(Frame), default(CornerRadius));
@@ -38,6 +44,18 @@ namespace GraphicsControls
         {
             get { return (XColor)GetValue(BorderColorProperty); }
             set { SetValue(BorderColorProperty, value); }
+        }
+
+        public int BorderThickness
+        {
+            get { return (int)GetValue(BorderThicknessProperty); }
+            set { SetValue(BorderThicknessProperty, value); }
+        }
+
+        public bool BorderIsDashed
+        {
+            get { return (bool)GetValue(BorderIsDashedProperty); }
+            set { SetValue(BorderIsDashedProperty, value); }
         }
 
         public CornerRadius CornerRadius
@@ -67,8 +85,7 @@ namespace GraphicsControls
             Scale = scale;
         }
 
-        public override List<string> GraphicsLayers =>
-            EntryLayers;
+        public override List<string> GraphicsLayers =>EntryLayers;
 
         public override void DrawLayer(string layer, ICanvas canvas, RectangleF dirtyRect)
         {
@@ -105,17 +122,22 @@ namespace GraphicsControls
 
         void DrawBorder(ICanvas canvas, RectangleF dirtyRect)
         {
-            canvas.SaveState();
+            canvas.SaveState();            
 
             canvas.StrokeColor = BorderColor.ToGraphicsColor();
-
+            canvas.StrokeSize = BorderThickness;
             var x = dirtyRect.X + CanvasDefaults.DefaultShadowBlur;
             var y = dirtyRect.Y + CanvasDefaults.DefaultShadowBlur;
 
             var height = dirtyRect.Height - CanvasDefaults.DefaultShadowBlur * 2;
             var width = dirtyRect.Width - CanvasDefaults.DefaultShadowBlur * 2;
 
-            canvas.DrawRoundedRectangle(x, y, width, height, (float)CornerRadius.TopLeft, (float)CornerRadius.TopRight, (float)CornerRadius.BottomLeft, (float)CornerRadius.BottomRight);
+            if (BorderIsDashed)
+            {
+                canvas.StrokeDashPattern = DASHED;
+            }
+
+            canvas.DrawRoundedRectangle(x, y, width, height, (float)CornerRadius.TopLeft, (float)CornerRadius.TopRight, (float)CornerRadius.BottomLeft, (float)CornerRadius.BottomRight);            
 
             canvas.RestoreState();
         }
